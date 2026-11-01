@@ -15,6 +15,10 @@ init(autoreset=True)
 # ملف السجلات بصيغة JSON
 LOG_FILE = "tor_unknown.json"
 
+# إعدادات تنبيهات تيليجرام (اختياري)
+TELEGRAM_BOT_TOKEN = ""
+TELEGRAM_CHAT_ID = ""
+
 def banner():
     print(Fore.CYAN + """
     ████████╗ ██████╗ ██████╗     ██╗   ██╗███╗   ██╗██╗  ██╗███╗   ██╗ ██████╗ ███╗   ██╗
@@ -22,8 +26,8 @@ def banner():
        ██║   ██║   ██║██████╔╝    ██║   ██║██╔██╗ ██║█████╔╝ ██╔██╗ ██║██║   ██║██╔██╗ ██║
        ██║   ██║   ██║██╔══██╗    ██║   ██║██║╚██╗██║██╔═██╗ ██║╚██╗██║██║   ██║██║╚██╗██║
        ██║   ╚██████╔╝██║  ██║    ╚██████╔╝██║ ╚████║██║  ██╗██║ ╚████║╚██████╔╝██║ ╚████║
-       ╚═╝    ╚═════╝ ╚═╝  ╚═╝     ╚═════╝ ╚═╝  ╚═══╝╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝ ╚═╝  ╚═══╝
-         [ Tool Name: TOR_UNKNOWN | Advanced Pro Edition with Leak Shield & JSON Logs ]
+       ╚═╝    ╚═════╝ ╚═╝  ╚═╝     ╚═════╝ ╚═╝  ╚═══╝╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝ ╚═╝  ╚═╝
+         [ Tool Name: TOR_UNKNOWN | Enterprise Edition with Telegram Alerts & Leak Shield ]
     """ + Fore.RESET)
 
 def check_tor_service():
@@ -39,9 +43,8 @@ def check_ip_leak():
     
     real_ip = None
     try:
-        # محاولة جلب الـ IP الحقيقي بدون بروكسي لفحصه
         real_ip = requests.get('https://api.ipify.org', timeout=5).text.strip()
-    except:
+    except requests.exceptions.RequestException:
         pass
 
     try:
@@ -51,7 +54,7 @@ def check_ip_leak():
         }
         tor_res = requests.get('http://ip-api.com/json/', proxies=proxies, timeout=10).json()
         tor_ip = tor_res.get('query')
-    except:
+    except requests.exceptions.RequestException:
         tor_ip = None
 
     if not tor_ip:
@@ -63,6 +66,31 @@ def check_ip_leak():
         sys.exit(1)
     else:
         print(Fore.GREEN + f"[+] Leak Check Passed! Secure Tor IP detected: {tor_ip}\n" + Fore.RESET)
+
+def send_telegram_alert(ip, country, city, isp, timestamp):
+    """إرسال تنبيه إلى تيليجرام في حال توفر بيانات البوت"""
+    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
+        return
+    
+    message = (
+        f"🚨 *TOR_UNKNOWN Alert*\n\n"
+        f"🔄 *New Identity Secured!*\n"
+        f"🌐 *IP:* `{ip}`\n"
+        f"🌍 *Country:* {country}\n"
+        f"🏙 *City:* {city}\n"
+        f"🏢 *ISP:* {isp}\n"
+        f"⏱ *Time:* {timestamp}"
+    )
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    payload = {
+        "chat_id": TELEGRAM_CHAT_ID,
+        "text": message,
+        "parse_mode": "Markdown"
+    }
+    try:
+        requests.post(url, json=payload, timeout=5)
+    except Exception:
+        pass
 
 def change_ip():
     """طلب هوية جديدة من شبكة تور"""
@@ -86,14 +114,15 @@ def get_ip_info():
         data = response.json()
         
         if data.get('status') == 'success':
-            ip = data.get('query')
-            country = data.get('country', 'Unknown')
-            city = data.get('city', 'Unknown')
-            isp = data.get('isp', 'Unknown')
-            return ip, country, city, isp
+            return (
+                data.get('query'),
+                data.get('country', 'Unknown'),
+                data.get('city', 'Unknown'),
+                data.get('isp', 'Unknown')
+            )
         else:
             return None, "Unknown", "Unknown", "Unknown"
-    except:
+    except requests.exceptions.RequestException:
         return None, "Connection Failed", "Connection Failed", "Connection Failed"
 
 def log_ip(ip_address, country, city, isp, timestamp):
@@ -134,7 +163,7 @@ def main():
         interval = 30
         is_random = False
 
-    print(Fore.GREEN + "\n[*] Starting TOR_UNKNOWN Advanced Engine..." + Fore.RESET)
+    print(Fore.GREEN + "\n[*] Starting TOR_UNKNOWN Enterprise Engine..." + Fore.RESET)
     print(Fore.CYAN + f"[*] JSON logs are being saved automatically to: {os.path.abspath(LOG_FILE)}" + Fore.RESET)
     print(Fore.CYAN + "[*] Press Ctrl+C to stop the tool safely.\n" + Fore.RESET)
 
@@ -153,7 +182,9 @@ def main():
                     print(Fore.WHITE + f"    ├── Country    : {country}")
                     print(Fore.WHITE + f"    ├── City       : {city}")
                     print(Fore.WHITE + f"    └── Exit ISP   : {isp}" + Fore.RESET)
+                    
                     log_ip(ip, country, city, isp, timestamp)
+                    send_telegram_alert(ip, country, city, isp, timestamp)
                 else:
                     print(Fore.RED + "[!] Failed to fetch IP details through Tor proxy." + Fore.RESET)
             else:
@@ -162,11 +193,9 @@ def main():
             counter += 1
             print(Fore.LIGHTBLACK_EX + "-" * 70 + Fore.RESET)
             
+            sleep_time = random.randint(min_t, max_t) if is_random else interval
             if is_random:
-                sleep_time = random.randint(min_t, max_t)
                 print(Fore.CYAN + f"[*] Waiting {sleep_time} seconds (Random Mode)..." + Fore.RESET)
-            else:
-                sleep_time = interval
                 
             time.sleep(sleep_time)
 
