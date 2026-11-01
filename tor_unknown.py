@@ -1,4 +1,6 @@
-#!/usr/bin/env python3
+#!/usr/init/env python3
+# -*- coding: utf-8 -*-
+
 import time
 import sys
 import os
@@ -21,13 +23,13 @@ TELEGRAM_CHAT_ID = ""
 
 def banner():
     print(Fore.CYAN + """
-    ████████╗ ██████╗ ██████╗     ██╗   ██╗███╗   ██╗██╗  ██╗███╗   ██╗ ██████╗ ███╗   ██╗
-    ╚══██╔══╝██╔═══██╗██╔══██╗    ██║   ██║████╗  ██║██║ ██╔╝████╗  ██║██╔═══██╗████╗  ██║
-       ██║   ██║   ██║██████╔╝    ██║   ██║██╔██╗ ██║█████╔╝ ██╔██╗ ██║██║   ██║██╔██╗ ██║
-       ██║   ██║   ██║██╔══██╗    ██║   ██║██║╚██╗██║██╔═██╗ ██║╚██╗██║██║   ██║██║╚██╗██║
-       ██║   ╚██████╔╝██║  ██║    ╚██████╔╝██║ ╚████║██║  ██╗██║ ╚████║╚██████╔╝██║ ╚████║
-       ╚═╝    ╚═════╝ ╚═╝  ╚═╝     ╚═════╝ ╚═╝  ╚═══╝╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝ ╚═╝  ╚═╝
-         [ Tool Name: TOR_UNKNOWN | Enterprise Edition with Telegram Alerts & Leak Shield ]
+    ████████╗ ██████╗ ██████╗      ██╗    ██╗███╗   ██╗██╗  ██╗███╗   ██╗ ██████╗ ███╗   ██╗
+    ╚══██╔══╝██╔═══██╗██╔══██╗     ██║    ██║████╗  ██║██║ ██╔╝████╗  ██║██╔═══██╗████╗  ██║
+       ██║   ██║   ██║██████╔╝     ██║    ██║██╔██╗ ██║█████╔╝ ██╔██╗ ██║██║   ██║██╔██╗ ██║
+       ██║   ██║   ██║██╔══██╗     ██║    ██║██║╚██╗██║██╔═██╗ ██║╚██╗██║██║   ██║██║╚██╗██║
+       ██║   ╚██████╔╝██║  ██║     ╚██████╔╝██║ ╚████║██║  ██╗██║ ╚████║╚██████╔╝██║ ╚████║
+       ╚═╝    ╚═════╝ ╚═╝  ╚═╝      ╚═════╝ ╚═╝  ╚═══╝╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝ ╚═╝  ╚═╝
+          [ Tool Name: TOR_UNKNOWN | Enterprise Edition with Telegram Alerts & Leak Shield ]
     """ + Fore.RESET)
 
 def check_tor_service():
@@ -149,6 +151,11 @@ def main():
     print(Fore.WHITE + "    1. Fixed Interval (Constant time between changes)")
     print(Fore.WHITE + "    2. Random Interval (Dynamic time range for better stealth)\n")
     
+    # تهيئة المتغيرات بقيم افتراضية لتفادي أخطاء النطاق
+    is_random = False
+    interval = 30
+    min_t, max_t = 20, 60
+
     try:
         mode = input(Fore.YELLOW + "[?] Choose mode (1 or 2): " + Fore.RESET).strip()
         if mode == "2":
@@ -172,7 +179,7 @@ def main():
         while True:
             print(Fore.YELLOW + f"[-] Cycle #{counter}: Requesting new identity & masking ISP..." + Fore.RESET)
             if change_ip():
-                time.sleep(3)  # مهلة لبناء المسار الجديد
+                time.sleep(3) # مهلة لبناء المسار الجديد
                 ip, country, city, isp = get_ip_info()
                 timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
                 
@@ -196,6 +203,8 @@ def main():
             sleep_time = random.randint(min_t, max_t) if is_random else interval
             if is_random:
                 print(Fore.CYAN + f"[*] Waiting {sleep_time} seconds (Random Mode)..." + Fore.RESET)
+            else:
+                print(Fore.CYAN + f"[*] Waiting {sleep_time} seconds (Fixed Mode)..." + Fore.RESET)
                 
             time.sleep(sleep_time)
 
