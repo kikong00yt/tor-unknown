@@ -3,6 +3,7 @@ import time
 import sys
 import os
 import random
+import json
 import requests
 from stem import Signal
 from stem.control import Controller
@@ -11,8 +12,8 @@ from colorama import init, Fore
 # تهيئة الألوان
 init(autoreset=True)
 
-# ملف السجلات لحفظ عناوين الـ IP مع الوقت
-LOG_FILE = "tor_unknown.log"
+# ملف السجلات بصيغة JSON
+LOG_FILE = "tor_unknown.json"
 
 def banner():
     print(Fore.CYAN + """
@@ -21,8 +22,8 @@ def banner():
        ██║   ██║   ██║██████╔╝    ██║   ██║██╔██╗ ██║█████╔╝ ██╔██╗ ██║██║   ██║██╔██╗ ██║
        ██║   ██║   ██║██╔══██╗    ██║   ██║██║╚██╗██║██╔═██╗ ██║╚██╗██║██║   ██║██║╚██╗██║
        ██║   ╚██████╔╝██║  ██║    ╚██████╔╝██║ ╚████║██║  ██╗██║ ╚████║╚██████╔╝██║ ╚████║
-       ╚═╝    ╚═════╝ ╚═╝  ╚═╝     ╚═════╝ ╚═╝  ╚═══╝╚═╝  ╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═══╝
-         [ Tool Name: TOR_UNKNOWN | Advanced Pro Edition with ISP Shield ]
+       ╚═╝    ╚═════╝ ╚═╝  ╚═╝     ╚═════╝ ╚═╝  ╚═══╝╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝ ╚═╝  ╚═══╝
+         [ Tool Name: TOR_UNKNOWN | Advanced Pro Edition with Leak Shield & JSON Logs ]
     """ + Fore.RESET)
 
 def check_tor_service():
@@ -31,6 +32,37 @@ def check_tor_service():
     if response != 0:
         print(Fore.RED + "[!] Error: Tor service is not running. Start it using: sudo systemctl start tor" + Fore.RESET)
         sys.exit(1)
+
+def check_ip_leak():
+    """التحقق من عدم تسرب الـ IP الحقيقي قبل بدء الأداة"""
+    print(Fore.YELLOW + "[*] Checking for IP/DNS leaks..." + Fore.RESET)
+    
+    real_ip = None
+    try:
+        # محاولة جلب الـ IP الحقيقي بدون بروكسي لفحصه
+        real_ip = requests.get('https://api.ipify.org', timeout=5).text.strip()
+    except:
+        pass
+
+    try:
+        proxies = {
+            'http': 'socks5://127.0.0.1:9050',
+            'https': 'socks5://127.0.0.1:9050'
+        }
+        tor_res = requests.get('http://ip-api.com/json/', proxies=proxies, timeout=10).json()
+        tor_ip = tor_res.get('query')
+    except:
+        tor_ip = None
+
+    if not tor_ip:
+        print(Fore.RED + "[!] Error: Cannot connect through Tor SOCKS proxy (127.0.0.1:9050). Check Tor service." + Fore.RESET)
+        sys.exit(1)
+
+    if real_ip and real_ip == tor_ip:
+        print(Fore.RED + "[!] CRITICAL WARNING: IP Leak Detected! Tor IP matches your real IP address!" + Fore.RESET)
+        sys.exit(1)
+    else:
+        print(Fore.GREEN + f"[+] Leak Check Passed! Secure Tor IP detected: {tor_ip}\n" + Fore.RESET)
 
 def change_ip():
     """طلب هوية جديدة من شبكة تور"""
@@ -64,17 +96,25 @@ def get_ip_info():
     except:
         return None, "Connection Failed", "Connection Failed", "Connection Failed"
 
-def log_ip(ip_address, country, city, timestamp):
-    """حفظ الـ IP ومعلوماته في ملف السجلات الخارجي"""
+def log_ip(ip_address, country, city, isp, timestamp):
+    """حفظ الـ IP ومعلوماته في ملف السجلات بصيغة JSON Lines"""
+    log_entry = {
+        "timestamp": timestamp,
+        "ip": ip_address,
+        "country": country,
+        "city": city,
+        "isp": isp
+    }
     try:
-        with open(LOG_FILE, "a") as f:
-            f.write(f"[{timestamp}] IP: {ip_address} | Country: {country} | City: {city}\n")
+        with open(LOG_FILE, "a", encoding="utf-8") as f:
+            f.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
     except Exception as e:
         print(Fore.YELLOW + f"[!] Warning: Could not write to log file: {e}" + Fore.RESET)
 
 def main():
     banner()
     check_tor_service()
+    check_ip_leak()
 
     print(Fore.YELLOW + "[?] Select Rotation Mode:" + Fore.RESET)
     print(Fore.WHITE + "    1. Fixed Interval (Constant time between changes)")
@@ -95,7 +135,7 @@ def main():
         is_random = False
 
     print(Fore.GREEN + "\n[*] Starting TOR_UNKNOWN Advanced Engine..." + Fore.RESET)
-    print(Fore.CYAN + f"[*] Logs are being saved automatically to: {os.path.abspath(LOG_FILE)}" + Fore.RESET)
+    print(Fore.CYAN + f"[*] JSON logs are being saved automatically to: {os.path.abspath(LOG_FILE)}" + Fore.RESET)
     print(Fore.CYAN + "[*] Press Ctrl+C to stop the tool safely.\n" + Fore.RESET)
 
     counter = 1
@@ -113,7 +153,7 @@ def main():
                     print(Fore.WHITE + f"    ├── Country    : {country}")
                     print(Fore.WHITE + f"    ├── City       : {city}")
                     print(Fore.WHITE + f"    └── Exit ISP   : {isp}" + Fore.RESET)
-                    log_ip(ip, country, city, timestamp)
+                    log_ip(ip, country, city, isp, timestamp)
                 else:
                     print(Fore.RED + "[!] Failed to fetch IP details through Tor proxy." + Fore.RESET)
             else:
@@ -131,7 +171,7 @@ def main():
             time.sleep(sleep_time)
 
     except KeyboardInterrupt:
-        print(Fore.CYAN + "\n\n[!] Tool stopped by user. Log file saved. Stay safe!" + Fore.RESET)
+        print(Fore.CYAN + "\n\n[!] Tool stopped by user. JSON Log file saved successfully. Stay safe!" + Fore.RESET)
         sys.exit(0)
 
 if __name__ == "__main__":
