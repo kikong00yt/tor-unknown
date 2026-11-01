@@ -1,67 +1,55 @@
-# 🛡️ TOR_UNKNOWN | Advanced Pro Edition with ISP Shield
+# 🛡️ TOR_UNKNOWN (Enterprise Edition)
 
-**TOR_UNKNOWN** is an advanced Python-based utility designed to automate IP rotation and identity switching through the Tor network, featuring built-in ISP masking and automatic session logging.
-
----
-
-## 🚀 Features
-
-* **Dual Rotation Modes:** Choose between a fixed time interval or a dynamic random interval for better stealth.
-* **Tor ControlPort Integration:** Securely requests new identity signals (`NEWNYM`) programmatically via Stem.
-* **ISP Shield:** Fetches and displays exit node details (IP, Country, City, and Exit ISP) through Tor's SOCKS5 proxy.
-* **Automatic Logging:** Saves every secured session timestamp and IP details to an external log file (`tor_unknown.log`).
+**TOR_UNKNOWN** is an advanced, automated Python-based tool designed to seamlessly rotate Tor identities (IP addresses) at fixed or random intervals. Built with built-in leak protection, structured JSON logging, and instant Telegram alert notifications, it ensures maximum stealth and monitoring for privacy-conscious users and security researchers.
 
 ---
 
-## 🛠️ Prerequisites & Tools Required
+## ✨ Features
 
-Before running the tool, ensure your system has the following installed:
-* **Operating System:** Linux (Kali Linux, Ubuntu, etc.)
-* **Python 3**
-* **Tor Service**
-* **Python Libraries:** `requests`, `stem`, `colorama`
+*   **🔄 Dual Rotation Modes:** Choose between a **Fixed Interval** (constant delay) or a **Random Interval** (dynamic delay range) for enhanced stealth and behavioral unpredictability.
+*   **🛡️ Leak Protection Shield (`Leak Shield`):** Automatically checks for potential public IP and DNS leaks against your real connection before starting rotation.
+*   **📝 Structured JSON Logging:** Automatically logs all IP transitions, timestamps, and ISP details into a structured `tor_unknown.json` file.
+*   **📱 Instant Telegram Alerts:** Optional webhook integration to send real-time security notifications straight to your Telegram chat or channel whenever a new identity is secured.
+*   **🎨 Clean CLI Interface:** Professional, color-coded terminal output powered by `colorama`.
 
 ---
 
-## ⚙️ Installation & Setup
+## ⚙️ Prerequisites
 
-Follow these steps to set up and run the tool on your system:
+Before running the tool, ensure you have the following installed and configured on your system (tested on Linux/Debian/Kali):
 
-### 1. Update system and install Tor & Python pip
-```bash
-sudo apt update && sudo apt install tor python3-pip -y
-2. Install required Python packages
-Bash
-pip3 install requests stem colorama
-3. Configure Tor ControlPort
-Open the Tor configuration file:
+1. **Tor Service:** Must be installed and running (`sudo systemctl start tor`).
+2. **Tor ControlPort:** Enabled on port `9051` (via `/etc/tor/torrc` configuration).
+3. **Python 3.x**
 
-Bash
-sudo nano /etc/tor/torrc
-Make sure the following lines are present and uncommented (add them if they don't exist):
+---
 
-Plaintext
-ControlPort 9051
-CookieAuthentication 1
-Save the file (Ctrl + O, then Enter) and exit (Ctrl + X). Then, restart the Tor service:
+## 📥 Installation & Setup
 
-Bash
-sudo systemctl restart tor
-🚀 Usage
-Clone the repository:
+1. **Clone the repository:**
+   ```bash
+   git clone [https://github.com/YOUR_USERNAME/tor-unknown.git](https://github.com/YOUR_USERNAME/tor-unknown.git)
+   cd tor-unknown
+2:Install required Python packages:
 
-Bash
-git clone [https://github.com/kikong00yt/tor-unknown.git](https://github.com/kikong00yt/tor-unknown.git)
-cd tor-unknown
-Run the tool:
+pip install -r requirements.txt
 
-Bash
+3:Run the tool:
+(Root/sudo permissions may be required for service checks and control port access)
+
 sudo python3 tor_unknown.py
-Select Rotation Mode:
 
-Mode 1: Fixed Interval (Constant time between changes).
+📱 Setting Up Telegram Alerts (Optional)
+If you want to receive real-time notifications on Telegram:
+1_Create a new bot via @BotFather to get your Bot Token.
+2_Get your unique Chat ID (e.g., via @userinfobot).
+3_Open tor_unknown.py and fill in your credentials at the top of the file:
 
-Mode 2: Random Interval (Dynamic time range for enhanced security).
+TELEGRAM_BOT_TOKEN = "YOUR_BOT_TOKEN_HERE"
+TELEGRAM_CHAT_ID = "YOUR_CHAT_ID_HERE"
+
+
 
 ⚠️ Disclaimer
-This tool (TOR_UNKNOWN) is developed for educational, security auditing, and privacy research purposes only. The author and contributors are not responsible for any misuse, illegal activities, or damages caused by this software. Use it responsibly and at your own risk.
+This tool is created for educational purposes, privacy enhancement, and authorized security testing only. The user is solely responsible for complying with local laws and terms of service of the networks they interact with.
+
